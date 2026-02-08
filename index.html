@@ -29,34 +29,36 @@
     </div>
 
     <script>
-        // Initialize default users if not in localStorage
-        const defaultUsers = [
-            { id: 101, name: "Administrateur", user: "admin", pass: "Cosider2026", role: "admin" },
-            { id: 102, name: "Contrôle de Gestion", user: "gestion", pass: "Cosider2026", role: "gestion" },
-            { id: 103, name: "Magasinier", user: "magasin", pass: "Cosider2026", role: "magasin" }
-        ];
-        if (!localStorage.getItem('addedUsers')) {
-            localStorage.setItem('addedUsers', JSON.stringify(defaultUsers));
-        }
-
-        document.getElementById('login-form').addEventListener('submit', function (e) {
+        document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
             const userVal = document.getElementById('username').value;
             const passVal = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-msg');
+            const submitBtn = this.querySelector('button[type="submit"]');
 
-            // Get users from localStorage
-            const users = JSON.parse(localStorage.getItem('addedUsers')) || defaultUsers;
-            const foundUser = users.find(u => u.user === userVal && u.pass === passVal);
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Connexion...';
+                errorMsg.style.display = 'none';
 
-            if (foundUser) {
-                localStorage.setItem('currentUser', JSON.stringify({
-                    username: foundUser.user,
-                    role: foundUser.role,
-                    fullName: foundUser.name
-                }));
-                window.location.href = 'cab-stats.html';
-            } else {
-                document.getElementById('error-msg').style.display = 'block';
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: userVal, password: passVal })
+                });
+
+                if (response.ok) {
+                    const user = await response.json();
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    window.location.href = 'cab-stats.html';
+                } else {
+                    throw new Error('Identifiants invalides');
+                }
+            } catch (err) {
+                errorMsg.textContent = 'Identifiants invalides ou erreur serveur';
+                errorMsg.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'SE CONNECTER';
             }
         });
     </script>

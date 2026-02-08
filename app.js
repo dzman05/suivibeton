@@ -4,21 +4,11 @@ if (!currentUser && !window.location.pathname.endsWith('index.html') && !window.
     window.location.href = 'index.html';
 }
 
-// Persisted Data from localStorage or Defaults
-let formulations = JSON.parse(localStorage.getItem('formulations')) || [
-    { id: 1, code: 'B25 H57.1', ciment: 350, eau: 180, poly: 1.2, g1525: 1050, g815: 450, s01: 400, s03: 400 }
-];
+// Data state
+let formulations = [];
+let productionLogs = [];
+let users = [];
 
-let productionLogs = JSON.parse(localStorage.getItem('productionLogs')) || [];
-let users = JSON.parse(localStorage.getItem('addedUsers')) || [
-    { id: 101, name: "Administrateur", user: "admin", pass: "Cosider2026", role: "admin" },
-    { id: 102, name: "Contrôle de Gestion", user: "gestion", pass: "Cosider2026", role: "gestion" },
-    { id: 103, name: "Magasinier", user: "magasin", pass: "Cosider2026", role: "magasin" }
-];
-// Save default users if not already in localStorage
-if (!localStorage.getItem('addedUsers')) {
-    localStorage.setItem('addedUsers', JSON.stringify(users));
-}
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
@@ -36,20 +26,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Page-specific initialization
     if (path.includes('cab-stats.html')) {
         initFilters();
+        await loadInitialData();
         filterStats();
     } else if (path.includes('cab-production.html')) {
+        await loadInitialData();
         loadProductionData();
         populateFormulationSelect();
         const prodDate = document.getElementById('prod-date');
         if (prodDate) prodDate.value = new Date().toISOString().split('T')[0];
     } else if (path.includes('cab-formulations.html')) {
-        loadFormulationsTable();
+        await loadFormulationsTable();
     } else if (path.includes('cab-users.html')) {
-        loadUsersList();
+        await loadUsersList();
     } else if (path.includes('cab-profile.html')) {
         document.getElementById('up-user').value = currentUser.username;
     }
 });
+
+async function loadInitialData() {
+    try {
+        const [prodRes, formRes] = await Promise.all([
+            fetch('/api/production'),
+            fetch('/api/formulations')
+        ]);
+        productionLogs = await prodRes.json();
+        formulations = await formRes.json();
+    } catch (e) {
+        console.error("Error loading data:", e);
+    }
+}
 
 // --- Common UI & Events ---
 function initCommonUI() {
@@ -93,7 +98,7 @@ function setupCommonEventListeners() {
     });
 
     // Production Entry (if on production page)
-    document.getElementById('production-form')?.addEventListener('submit', (e) => {
+    document.getElementById('production-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const editId = document.getElementById('edit-log-id').value;
         const fId = parseInt(document.getElementById('formulation-select').value);
@@ -103,35 +108,49 @@ function setupCommonEventListeners() {
         const date = document.getElementById('prod-date').value;
 
         if (editId) {
-            const index = productionLogs.findIndex(l => l.id == editId);
-            if (index !== -1) {
-                productionLogs[index] = { ...productionLogs[index], date, centrale, destination, formulationId: fId, quantity: qty };
-            }
-            document.getElementById('edit-log-id').value = '';
-            document.querySelector('#production-form button').textContent = 'ENREGISTRER';
+            // Edit not fully implemented in backend yet, using alert
+            alert("Modification non supportée pour le moment en mode connecté");
         } else {
-            productionLogs.unshift({ id: Date.now(), date, centrale, destination, formulationId: fId, quantity: qty });
+            const data = { date, centrale, destination, formulationId: fId, quantity: qty };
+            try {
+                const res = await fetch('/api/production', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (res.ok) {
+                    await loadInitialData();
+                    loadProductionData();
+                    closeProductionModal();
+                } else {
+                    alert("Erreur lors de l'enregistrement");
+                }
+            } catch (err) { console.error(err); }
         }
-
-        saveAndReload('productionLogs', productionLogs, loadProductionData);
-        e.target.reset();
-        document.getElementById('prod-date').value = new Date().toISOString().split('T')[0];
-        closeProductionModal();
     });
 
     // User Management (if on users page)
-    document.getElementById('add-user-form')?.addEventListener('submit', (e) => {
+    document.getElementById('add-user-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newUser = {
-            id: Date.now(),
-            name: document.getElementById('nu-name').value,
-            user: document.getElementById('nu-user').value,
-            pass: document.getElementById('nu-pass').value,
-            role: document.getElementById('nu-role').value
-        };
-        users.push(newUser);
-        saveAndReload('addedUsers', users, loadUsersList);
-        e.target.reset();
+        const fullName = document.getElementById('nu-name').value;
+        const username = document.getElementById('nu-user').value;
+        const pass = document.getElementById('nu-pass').value;
+        const role = document.getElementById('nu-role').value;
+
+        try {
+            const res = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fullName, username, password: pass, role })
+            });
+
+            if (res.ok) {
+                await loadUsersList();
+                document.getElementById('add-user-form').reset();
+            } else {
+                alert("Erreur ajout utilisateur");
+            }
+        } catch (err) { console.error(err); }
     });
 
     // New Formulation (if on formulations page)
@@ -580,24 +599,13 @@ function loadProductionData() {
 }
 
 function editProduction(id) {
-    const log = productionLogs.find(l => l.id == id);
-    if (!log) return;
-    document.getElementById('edit-log-id').value = log.id;
-    document.getElementById('centrale-select').value = log.centrale;
-    document.getElementById('formulation-select').value = log.formulationId;
-    document.getElementById('quantity').value = log.quantity;
-    document.getElementById('destination').value = log.destination || '';
-    document.getElementById('prod-date').value = log.date;
-
-    document.getElementById('modal-title').textContent = 'Modifier la Sortie';
-    document.querySelector('#production-form button[type="submit"]').textContent = 'MODIFIER';
-    openProductionModal();
+    // Not implemented for now in API version to keep it simple
+    alert("Modification non supportée pour le moment en mode connecté");
 }
 
 function openProductionModal() {
     const modal = document.getElementById('p-modal');
-    if (!modal) return;
-    modal.style.display = 'flex';
+    if (modal) modal.style.display = 'flex';
 }
 
 function closeProductionModal() {
@@ -612,15 +620,20 @@ function closeProductionModal() {
 }
 
 function deleteProduction(id) {
-    if (confirm("Supprimer cette entrée ?")) {
-        productionLogs = productionLogs.filter(l => l.id != id);
-        saveAndReload('productionLogs', productionLogs, loadProductionData);
-    }
+    // Not implemented
+    alert("Suppression non supportée pour le moment en mode connecté");
 }
 
-function loadFormulationsTable() {
+async function loadFormulationsTable() {
     const tbody = document.getElementById('formulations-body');
     if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="9">Chargement...</td></tr>';
+
+    try {
+        const res = await fetch('/api/formulations');
+        if (res.ok) formulations = await res.json();
+    } catch (e) { console.error(e); }
+
     tbody.innerHTML = formulations.map(f => `
         <tr>
             <td><strong>${f.code}</strong></td>
@@ -632,10 +645,13 @@ function loadFormulationsTable() {
             <td>${f.s01}</td>
             <td>${f.s03}</td>
             <td class="admin-only">
-                <button class="btn-icon" onclick="editFormulation(${f.id})" style="color:var(--cosider-blue); background:none; border:none; cursor:pointer; margin-right:8px;"><i class="fas fa-edit"></i></button>
-                <button class="btn-icon" onclick="deleteFormulation(${f.id})" style="color:#e74c3c; background:none; border:none; cursor:pointer;"><i class="fas fa-trash"></i></button>
+                <button class="btn-icon" onclick="editFormulation(${f.id})"><i class="fas fa-edit"></i></button>
             </td>
         </tr>`).join('');
+}
+
+function editFormulation(id) {
+    alert("Modification non supportée pour le moment");
 }
 
 function populateFormulationSelect() {
@@ -644,30 +660,35 @@ function populateFormulationSelect() {
     select.innerHTML = formulations.map(f => `<option value="${f.id}">${f.code}</option>`).join('');
 }
 
-function loadUsersList() {
+async function loadUsersList() {
     const container = document.getElementById('users-list-container');
     if (!container) return;
-    container.innerHTML = users.length ? '' : '<p style="color:#888;">Aucun utilisateur ajouté.</p>';
+    container.innerHTML = '<p>Chargement...</p>';
+
+    try {
+        const res = await fetch('/api/users');
+        if (res.ok) users = await res.json();
+    } catch (e) { console.error(e); }
+
+    container.innerHTML = '';
+
+    if (users.length === 0) {
+        container.innerHTML = '<p style="color:#888;">Aucun utilisateur trouvé.</p>';
+        return;
+    }
+
     users.forEach(u => {
         const div = document.createElement('div');
         div.style.padding = '0.7rem';
         div.style.borderBottom = '1px solid #eee';
         div.style.display = 'flex';
         div.style.justifyContent = 'space-between';
-        div.innerHTML = `<div><strong>${u.name}</strong> (@${u.user})<br><small>${u.role}</small></div>
-            <button class="btn-icon" onclick="deleteUser(${u.id})"><i class="fas fa-user-minus"></i></button>`;
+        div.innerHTML = `<div><strong>${u.fullName || u.name}</strong> (@${u.username || u.user})<br><small>${u.role}</small></div>
+            <button class="btn-icon" onclick="deleteUser(${u.id})"><i class="fas fa-trash"></i></button>`;
         container.appendChild(div);
     });
 }
 
 function deleteUser(id) {
-    if (confirm("Supprimer cet utilisateur ?")) {
-        users = users.filter(u => u.id != id);
-        saveAndReload('addedUsers', users, loadUsersList);
-    }
-}
-
-function saveAndReload(key, data, callback) {
-    localStorage.setItem(key, JSON.stringify(data));
-    if (callback) callback();
+    alert("Suppression non supportée pour le moment");
 }
