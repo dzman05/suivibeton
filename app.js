@@ -10,7 +10,7 @@ let productionLogs = [];
 let users = [];
 
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const path = window.location.pathname;
     if (path.endsWith('index.html') || path.endsWith('/')) return;
 

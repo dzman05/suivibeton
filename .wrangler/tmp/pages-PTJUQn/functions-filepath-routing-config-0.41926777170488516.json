@@ -1,0 +1,53 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/formulations",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/formulations.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/login",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/login.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/production",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/production.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/production",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/production.js:onRequestPost"
+      ]
+    },
+    {
+      "routePath": "/api/users",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/users.js:onRequestGet"
+      ]
+    },
+    {
+      "routePath": "/api/users",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/users.js:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}
