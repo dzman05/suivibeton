@@ -156,46 +156,20 @@ function setupCommonEventListeners() {
     // New Formulation (if on formulations page)
     document.getElementById('new-formulation-form')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        const editId = e.target.dataset.editId;
-        const fData = {
-            code: document.getElementById('f-nom').value,
-            ciment: parseFloat(document.getElementById('f-ciment').value),
-            eau: parseFloat(document.getElementById('f-eau').value),
-            poly: parseFloat(document.getElementById('f-poly').value),
-            g1525: parseFloat(document.getElementById('f-g1525').value),
-            g815: parseFloat(document.getElementById('f-g815').value),
-            s01: parseFloat(document.getElementById('f-s01').value),
-            s03: parseFloat(document.getElementById('f-s03').value)
-        };
-
-        if (editId) {
-            const index = formulations.findIndex(f => f.id == editId);
-            if (index !== -1) {
-                formulations[index] = { ...formulations[index], ...fData };
-            }
-            delete e.target.dataset.editId;
-            e.target.querySelector('button[type="submit"]').textContent = 'ENREGISTRER';
-        } else {
-            formulations.push({ id: Date.now(), ...fData });
-        }
-
-        saveAndReload('formulations', formulations, () => {
-            loadFormulationsTable();
-            document.getElementById('f-modal').style.display = 'none';
-        });
+        alert("Ajout/Modification de formulation non supporté pour le moment en mode connecté");
+        document.getElementById('f-modal').style.display = 'none';
         e.target.reset();
+    });
+
+    // Profile Update (if on profile page)
+    document.getElementById('update-profile-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        alert("Mise à jour du profil non supportée pour le moment en mode connecté");
     });
 }
 
 function deleteFormulation(id) {
-    if (confirm("Supprimer ce dosage ?")) {
-        formulations = formulations.filter(f => f.id != id);
-        saveAndReload('formulations', formulations, () => {
-            if (window.location.pathname.includes('cab-formulations.html')) {
-                loadFormulationsTable();
-            }
-        });
-    }
+    alert("Suppression non supportée pour le moment en mode connecté");
 }
 
 function editFormulation(id) {
