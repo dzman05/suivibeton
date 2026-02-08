@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion | COSIDER CANALISATION</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="login-body">
+    <div class="login-card">
+        <img src="logo.webp" alt="COSIDER Logo" class="logo">
+        <h2>Suivi Béton & Agrégats</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username"><i class="fas fa-user"></i> Nom d'utilisateur</label>
+                <input type="text" id="username" placeholder="Entrez votre identifiant" required>
+            </div>
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Mot de passe</label>
+                <input type="password" id="password" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary">SE CONNECTER</button>
+        </form>
+        <p id="error-msg" style="color: #e74c3c; margin-top: 1rem; font-size: 0.9rem; display: none;">Identifiants
+            invalides</p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const userVal = document.getElementById('username').value;
+            const passVal = document.getElementById('password').value;
+
+            // Get users from localStorage (initialized by app.js or existing)
+            const users = JSON.parse(localStorage.getItem('addedUsers')) || [];
+            const foundUser = users.find(u => u.user === userVal && u.pass === passVal);
+
+            if (foundUser) {
+                localStorage.setItem('currentUser', JSON.stringify({
+                    username: foundUser.user,
+                    role: foundUser.role,
+                    fullName: foundUser.name
+                }));
+                // Redirect based on role or common stats
+                window.location.href = 'cab-stats.html';
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>
