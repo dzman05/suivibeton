@@ -40,10 +40,7 @@ CREATE TABLE production (
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
--- Initial Admin (Password: cosider2024)
-INSERT INTO users (username, password_hash, role, full_name) VALUES ('admin', 'cosider2024', 'admin', 'Administrateur Centrale');
-
--- Initial Viewers
-INSERT INTO users (username, password_hash, role, full_name) VALUES ('viewer1', 'viewer123', 'viewer', 'Consultant 1');
-INSERT INTO users (username, password_hash, role, full_name) VALUES ('viewer2', 'viewer123', 'viewer', 'Consultant 2');
-INSERT INTO users (username, password_hash, role, full_name) VALUES ('viewer3', 'viewer123', 'viewer', 'Consultant 3');
+-- Initial Users (Password: Cosider2026)
+INSERT INTO users (username, password_hash, role, full_name) VALUES ('admin', 'Cosider2026', 'admin', 'Administrateur');
+INSERT INTO users (username, password_hash, role, full_name) VALUES ('gestion', 'Cosider2026', 'gestion', 'Contrôle de Gestion');
+INSERT INTO users (username, password_hash, role, full_name) VALUES ('magasin', 'Cosider2026', 'magasin', 'Magasinier');

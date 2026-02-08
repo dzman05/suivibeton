@@ -29,13 +29,23 @@
     </div>
 
     <script>
+        // Initialize default users if not in localStorage
+        const defaultUsers = [
+            { id: 101, name: "Administrateur", user: "admin", pass: "Cosider2026", role: "admin" },
+            { id: 102, name: "Contrôle de Gestion", user: "gestion", pass: "Cosider2026", role: "gestion" },
+            { id: 103, name: "Magasinier", user: "magasin", pass: "Cosider2026", role: "magasin" }
+        ];
+        if (!localStorage.getItem('addedUsers')) {
+            localStorage.setItem('addedUsers', JSON.stringify(defaultUsers));
+        }
+
         document.getElementById('login-form').addEventListener('submit', function (e) {
             e.preventDefault();
             const userVal = document.getElementById('username').value;
             const passVal = document.getElementById('password').value;
 
-            // Get users from localStorage (initialized by app.js or existing)
-            const users = JSON.parse(localStorage.getItem('addedUsers')) || [];
+            // Get users from localStorage
+            const users = JSON.parse(localStorage.getItem('addedUsers')) || defaultUsers;
             const foundUser = users.find(u => u.user === userVal && u.pass === passVal);
 
             if (foundUser) {
@@ -44,7 +54,6 @@
                     role: foundUser.role,
                     fullName: foundUser.name
                 }));
-                // Redirect based on role or common stats
                 window.location.href = 'cab-stats.html';
             } else {
                 document.getElementById('error-msg').style.display = 'block';
